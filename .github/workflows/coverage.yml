@@ -24,15 +24,29 @@ jobs:
         run: |
           BIN_PATH="$(swift build --show-bin-path)"
           PROFDATA="${BIN_PATH}/codecov/default.profdata"
-          mapfile -t XCTESTS < <(find "${BIN_PATH}" -maxdepth 2 -name '*.xctest' -type f)
-          if [ "${#XCTESTS[@]}" -eq 0 ]; then
+          LLVM_COV="$(command -v llvm-cov || true)"
+          if [ -z "${LLVM_COV}" ] && command -v xcrun >/dev/null 2>&1; then
+            LLVM_COV="$(xcrun --find llvm-cov)"
+          fi
+          if [ -z "${LLVM_COV}" ]; then
+            echo "llvm-cov not found" >&2
+            exit 1
+          fi
+          find_xctests() {
+            find "${BIN_PATH}" -maxdepth 4 \( \
+              \( -name '*.xctest' -type f \) -o \
+              \( -path '*.xctest/Contents/MacOS/*' -type f \) \
+            \) "$@"
+          }
+          if ! find_xctests -print -quit | grep -q .; then
             echo "No .xctest binary found under ${BIN_PATH}" >&2
             exit 1
           fi
-          llvm-cov export -format=lcov \
-            -instr-profile "${PROFDATA}" \
-            -ignore-filename-regex='\.build/|Tests/' \
-            "${XCTESTS[@]}" > coverage.lcov
+          find_xctests -exec \
+            "${LLVM_COV}" export -format=lcov \
+              -instr-profile "${PROFDATA}" \
+              -ignore-filename-regex='\.build/|Tests/' \
+              {} + > coverage.lcov
           wc -l coverage.lcov
       - name: Install Codecov dependencies
         run: apt-get update && apt-get install -y curl
