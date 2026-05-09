@@ -1,0 +1,57 @@
+name: Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    name: swift test + Codecov
+    runs-on: ubuntu-latest
+    container: swift:6.2-noble
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: swift test (with coverage)
+        run: swift test --parallel --enable-code-coverage
+      - name: Export lcov
+        run: |
+          BIN_PATH="$(swift build --show-bin-path)"
+          PROFDATA="${BIN_PATH}/codecov/default.profdata"
+          LLVM_COV="$(command -v llvm-cov || true)"
+          if [ -z "${LLVM_COV}" ] && command -v xcrun >/dev/null 2>&1; then
+            LLVM_COV="$(xcrun --find llvm-cov)"
+          fi
+          if [ -z "${LLVM_COV}" ]; then
+            echo "llvm-cov not found" >&2
+            exit 1
+          fi
+          find_xctests() {
+            find "${BIN_PATH}" -maxdepth 4 \( \
+              \( -name '*.xctest' -type f \) -o \
+              \( -path '*.xctest/Contents/MacOS/*' -type f \) \
+            \) "$@"
+          }
+          if ! find_xctests -print -quit | grep -q .; then
+            echo "No .xctest binary found under ${BIN_PATH}" >&2
+            exit 1
+          fi
+          find_xctests -exec \
+            "${LLVM_COV}" export -format=lcov \
+              -instr-profile "${PROFDATA}" \
+              -ignore-filename-regex='\.build/|Tests/' \
+              {} + > coverage.lcov
+          wc -l coverage.lcov
+      - name: Install Codecov dependencies
+        run: apt-get update && apt-get install -y curl
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@af09b5e394c93991b95a5e7646aeb90c1917f78f # v5.5.1
+        with:
+          files: coverage.lcov
+          fail_ci_if_error: false

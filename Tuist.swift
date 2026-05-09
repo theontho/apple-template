@@ -2,7 +2,7 @@ import ProjectDescription
 
 let tuist = Tuist(
   project: .tuist(
-    compatibleXcodeVersions: .upToNextMajor("26.0.0"),
+    compatibleXcodeVersions: .all,
     generationOptions: .options(
       buildInsightsDisabled: true,
       testInsightsDisabled: true,

@@ -1,0 +1,18 @@
+{
+  "strictness": 2,
+  "commentTypes": ["logic", "syntax"],
+  "triggerOnUpdates": true,
+  "updateExistingSummaryComment": true,
+  "includeBranches": ["main"],
+  "ignorePatterns": ".build/**\nDerivedData/**\nDerived/**\n**/*.xcodeproj/**\n**/*.xcworkspace/**\nPackage.resolved\nout/**\ntmp/**\nscratch/**\n**/*.lock",
+  "summarySection": {"included": true, "collapsible": true, "defaultOpen": false},
+  "issuesTableSection": {"included": true, "collapsible": true, "defaultOpen": true},
+  "instructions": "Greenfield Swift/SwiftUI project. Do NOT suggest backward-compatibility shims, legacy fallbacks, or deprecation paths — update all call sites in the same change. Skip style/formatting nits (handled by swift-format). Focus on correctness, security, and maintainability.",
+  "rules": [
+    {"id": "core-vs-cli-split", "scope": ["Sources/**/*.swift"], "rule": "Reusable business logic belongs in *Core targets; executable parsing and terminal output belong in *CLI targets. Flag misplaced logic.", "severity": 2, "enabled": true},
+    {"id": "no-force-unwrap", "scope": ["Sources/**/*.swift", "Apps/**/*.swift"], "rule": "Prefer explicit error handling (do/try/catch, guard let, if let) over force unwraps (!) or force tries (try!). Flag new force unwraps outside tests.", "severity": 2, "enabled": true},
+    {"id": "swift6-typecheck-timeout", "scope": ["Apps/**/*.swift", "Sources/**/*.swift"], "rule": "Avoid inline array literals that mix multiple sorted-dictionary .map{...}.joined() chains. Pre-bind each chain to a typed [String] to prevent Swift 6.2 type-checker timeouts.", "severity": 2, "enabled": true},
+    {"id": "redact-secrets", "scope": ["Sources/**/*.swift", "Apps/**/*.swift"], "rule": "Configuration display must redact keys, tokens, and secrets.", "severity": 1, "enabled": true},
+    {"id": "no-backcompat", "scope": ["**/*"], "rule": "Project is greenfield and unreleased. Reject suggestions to add backward-compatibility shims, legacy code paths, or deprecation warnings.", "severity": 2, "enabled": true}
+  ]
+}
