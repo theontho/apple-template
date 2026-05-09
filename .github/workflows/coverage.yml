@@ -17,7 +17,7 @@ jobs:
     container: swift:6.2-noble
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Install llvm-tools
         run: |
           apt-get update
@@ -39,8 +39,7 @@ jobs:
             "${XCTEST}" > coverage.lcov
           wc -l coverage.lcov
       - name: Upload to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@af09b5e394c93991b95a5e7646aeb90c1917f78f # v5.5.1
         with:
           files: coverage.lcov
           fail_ci_if_error: false
-          token: ${{ secrets.CODECOV_TOKEN }}
