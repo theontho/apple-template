@@ -1,0 +1,46 @@
+name: Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    name: swift test + Codecov
+    runs-on: ubuntu-latest
+    container: swift:6.2-noble
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install llvm-tools
+        run: |
+          apt-get update
+          apt-get install -y llvm curl
+      - name: swift test (with coverage)
+        run: swift test --parallel --enable-code-coverage
+      - name: Export lcov
+        run: |
+          BIN_PATH="$(swift build --show-bin-path)"
+          PROFDATA="${BIN_PATH}/codecov/default.profdata"
+          XCTEST=$(find "${BIN_PATH}" -maxdepth 2 -name '*.xctest' -print -quit)
+          if [ -z "${XCTEST}" ]; then
+            echo "No .xctest binary found under ${BIN_PATH}" >&2
+            exit 1
+          fi
+          llvm-cov export -format=lcov \
+            -instr-profile "${PROFDATA}" \
+            -ignore-filename-regex='\.build/|Tests/' \
+            "${XCTEST}" > coverage.lcov
+          wc -l coverage.lcov
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.lcov
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
