@@ -24,16 +24,18 @@ jobs:
         run: |
           BIN_PATH="$(swift build --show-bin-path)"
           PROFDATA="${BIN_PATH}/codecov/default.profdata"
-          XCTEST=$(find "${BIN_PATH}" -maxdepth 2 -name '*.xctest' -print -quit)
-          if [ -z "${XCTEST}" ]; then
+          mapfile -t XCTESTS < <(find "${BIN_PATH}" -maxdepth 2 -name '*.xctest' -type f)
+          if [ "${#XCTESTS[@]}" -eq 0 ]; then
             echo "No .xctest binary found under ${BIN_PATH}" >&2
             exit 1
           fi
           llvm-cov export -format=lcov \
             -instr-profile "${PROFDATA}" \
             -ignore-filename-regex='\.build/|Tests/' \
-            "${XCTEST}" > coverage.lcov
+            "${XCTESTS[@]}" > coverage.lcov
           wc -l coverage.lcov
+      - name: Install Codecov dependencies
+        run: apt-get update && apt-get install -y curl
       - name: Upload to Codecov
         uses: codecov/codecov-action@af09b5e394c93991b95a5e7646aeb90c1917f78f # v5.5.1
         with:
