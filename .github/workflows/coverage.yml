@@ -17,7 +17,7 @@ jobs:
     container: swift:6.2-noble
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - name: swift test (with coverage)
         run: swift test --parallel --enable-code-coverage
       - name: Export lcov
@@ -51,7 +51,7 @@ jobs:
       - name: Install Codecov dependencies
         run: apt-get update && apt-get install -y curl
       - name: Upload to Codecov
-        uses: codecov/codecov-action@af09b5e394c93991b95a5e7646aeb90c1917f78f # v5.5.1
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         with:
           files: coverage.lcov
           fail_ci_if_error: false
